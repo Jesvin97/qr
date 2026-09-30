@@ -295,10 +295,21 @@
       <h2>Your business</h2>
       <p class="sub">Only fill in what you want customers to see.</p>
 
-      <label class="field">Logo (URL)
+      <div class="logo-row">
+        <label class="logo-box" id="logoBox">
+          <span id="logoHint">Add logo</span>
+          <input type="file" id="logo" accept="image/*" hidden>
+        </label>
+        <div>
+          <strong>Logo</strong>
+          <span>Upload your logo. It appears in the centre of your QR code.</span><br>
+          <button type="button" class="link-btn" id="removeLogo" hidden>Remove logo</button>
+        </div>
+      </div>
+      <label class="field">Logo link for your page (optional)
         <input type="text" id="logoUrl" placeholder="https://example.com/logo.png">
         <small class="error" id="logoUrlErr"></small>
-        <small style="display: block; margin-top: 6px; color: var(--muted); font-size: .75rem;">Paste the link to your logo. It will show on your link page and in the QR center.</small>
+        <small style="display: block; margin-top: 6px; color: var(--muted); font-size: .75rem; font-weight: 400;">Only needed to show your logo on the page customers see after scanning. It must be a public image link.</small>
       </label>
 
       <label class="field">Business name
@@ -378,6 +389,7 @@
   const hosted = /^https?:$/.test(location.protocol);
   let logoImg = null;
   let logoBg = '#fff';
+  let uploadedSrc = '';
 
   if (window.qrcode) qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
 
@@ -512,9 +524,11 @@
     root.replaceChildren();
     const avatar = document.createElement('div');
     avatar.className = 'avatar';
-    if (d.logo) {
+    const logoSrc = d.logo || (preview ? uploadedSrc : '');
+    if (logoSrc) {
       const img = document.createElement('img');
-      img.src = d.logo;
+      img.src = logoSrc;
+      img.onerror = () => { avatar.replaceChildren(); avatar.textContent = d.name ? initials(d.name) : '?'; };
       img.alt = d.name || 'Logo';
       img.style.cssText = 'max-width:100%; max-height:100%; padding:8px; object-fit:contain;';
       avatar.replaceChildren(img);
@@ -592,27 +606,6 @@
     const d = collect(errors);
     const base = baseUrl(errors);
     showErrors(errors);
-
-    // Load logo from URL if provided and different from cached
-    if (d.logo && d.logo !== logoImg?.src) {
-      try {
-        const img = new Image();
-        await new Promise((ok, no) => {
-          img.onload = ok;
-          img.onerror = no;
-          img.src = d.logo;
-        });
-        logoImg = img;
-        logoBg = pickLogoBg(img);
-      } catch (e) {
-        errors.logoUrl = 'Could not load image. Check the URL is public.';
-        logoImg = null;
-        d.logo = '';
-      }
-    } else if (!d.logo) {
-      logoImg = null;
-      logoBg = '#fff';
-    }
 
     buildProfile($('preview'), d, true);
 
@@ -701,6 +694,7 @@
 
   function setLogo(img, src) {
     logoImg = img;
+    uploadedSrc = img ? src : '';
     logoBg = img ? pickLogoBg(img) : '#fff';
     $('logoBox').style.background = img ? logoBg : '';
     $('logoBox').querySelector('img')?.remove();
@@ -718,6 +712,23 @@
   function initBuilder() {
     document.querySelectorAll('[data-icon]').forEach(el => { el.innerHTML = iconSvg(el.dataset.icon); el.style.display = 'flex'; });
     $('hostNotice').hidden = hosted;
+
+    $('logo').addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => setLogo(img, reader.result);
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    $('removeLogo').addEventListener('click', () => {
+      $('logo').value = '';
+      setLogo(null);
+    });
 
     $('igCheck').addEventListener('change', e => { $('igWrap').hidden = !e.target.checked; render().catch(()=>{}); });
     $('fbCheck').addEventListener('change', e => { $('fbWrap').hidden = !e.target.checked; render().catch(()=>{}); });
