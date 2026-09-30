@@ -712,16 +712,16 @@
       preview.alt = 'Logo preview';
       $('logoBox').prepend(preview);
     }
-    render();
+    render().catch(()=>{});
   }
 
   function initBuilder() {
     document.querySelectorAll('[data-icon]').forEach(el => { el.innerHTML = iconSvg(el.dataset.icon); el.style.display = 'flex'; });
     $('hostNotice').hidden = hosted;
 
-    $('igCheck').addEventListener('change', e => { $('igWrap').hidden = !e.target.checked; render(); });
-    $('fbCheck').addEventListener('change', e => { $('fbWrap').hidden = !e.target.checked; render(); });
-    ['address', 'website', 'instagram', 'facebook', 'siteUrl', 'logoUrl'].forEach(id => $(id).addEventListener('input', render));
+    $('igCheck').addEventListener('change', e => { $('igWrap').hidden = !e.target.checked; render().catch(()=>{}); });
+    $('fbCheck').addEventListener('change', e => { $('fbWrap').hidden = !e.target.checked; render().catch(()=>{}); });
+    ['address', 'website', 'instagram', 'facebook', 'siteUrl', 'logoUrl'].forEach(id => $(id).addEventListener('input', () => render().catch(()=>{})));
 
     // Capitalise the first letter of every word as the user types.
     $('name').addEventListener('input', e => {
@@ -750,8 +750,8 @@
       a.click();
     });
 
-    render();
-    document.fonts?.ready.then(render);
+    render().catch(()=>{});
+    document.fonts?.ready.then(() => render().catch(()=>{}));
   }
 
   // A link with details after the # is a scanned QR: show the link page instead of the builder.
