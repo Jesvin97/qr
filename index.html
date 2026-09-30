@@ -302,15 +302,10 @@
         </label>
         <div>
           <strong>Logo</strong>
-          <span>Upload your logo. It appears in the centre of your QR code.</span><br>
+          <span>Shown in the centre of your QR code and on your page.</span><br>
           <button type="button" class="link-btn" id="removeLogo" hidden>Remove logo</button>
         </div>
       </div>
-      <label class="field">Logo link for your page (optional)
-        <input type="text" id="logoUrl" placeholder="https://example.com/logo.png">
-        <small class="error" id="logoUrlErr"></small>
-        <small style="display: block; margin-top: 6px; color: var(--muted); font-size: .75rem; font-weight: 400;">Only needed to show your logo on the page customers see after scanning. It must be a public image link.</small>
-      </label>
 
       <label class="field">Business name
         <input type="text" id="name" placeholder="Sunrise Cafe" autocomplete="organization">
@@ -389,7 +384,7 @@
   const hosted = /^https?:$/.test(location.protocol);
   let logoImg = null;
   let logoBg = '#fff';
-  let uploadedSrc = '';
+  let tinyLogo = '';
 
   if (window.qrcode) qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
 
@@ -433,12 +428,7 @@
   function collect(errors) {
     const d = { name: $('name').value.trim(), phone: '', address: '', website: '', instagram: '', facebook: '', logo: '' };
 
-    const logoUrl = $('logoUrl').value.trim();
-    if (logoUrl) {
-      const u = parseDomainUrl(logoUrl);
-      if (u) d.logo = u.href;
-      else errors.logoUrl = 'Enter a valid image URL';
-    }
+    d.logo = tinyLogo;
 
     const website = $('website').value.trim();
     if (website) {
@@ -476,7 +466,42 @@
     return d;
   }
 
-  const hasDetails = d => Object.values(d).some(Boolean);
+  // A logo on its own isn't enough to make a QR code.
+  const hasDetails = d => Object.keys(d).some(k => k !== 'logo' && d[k]);
+
+  // Shrinks the logo to a tiny image so it can travel inside the QR link (a QR can't hold a full-size picture).
+  function makeTinyLogo(img) {
+    let best = '';
+    for (const size of [64, 48, 40, 32, 24]) {
+      const c = document.createElement('canvas');
+      c.width = c.height = size;
+      const cx = c.getContext('2d');
+      const s = Math.min(size / img.width, size / img.height);
+      cx.drawImage(img, (size - img.width * s) / 2, (size - img.height * s) / 2, img.width * s, img.height * s);
+      let url = c.toDataURL('image/webp', 0.6);
+      let tag = 'w';
+      if (!url.startsWith('data:image/webp')) {
+        const flat = document.createElement('canvas');
+        flat.width = flat.height = size;
+        const fx = flat.getContext('2d');
+        fx.fillStyle = '#fff';
+        fx.fillRect(0, 0, size, size);
+        fx.drawImage(c, 0, 0);
+        url = flat.toDataURL('image/jpeg', 0.5);
+        tag = 'j';
+      }
+      best = tag + url.slice(url.indexOf(',') + 1).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      if (best.length <= 900) break;
+    }
+    return best;
+  }
+
+  // Turns the compact form back into an image source, refusing anything that isn't plain base64.
+  function logoSource(code) {
+    if (!/^[wj][A-Za-z0-9_-]{20,4000}$/.test(code || '')) return '';
+    const b64 = code.slice(1).replace(/-/g, '+').replace(/_/g, '/');
+    return `data:image/${code[0] === 'w' ? 'webp' : 'jpeg'};base64,${b64}`;
+  }
 
   function vEscape(s) {
     return s.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/([,;])/g, '\\$1');
@@ -496,7 +521,7 @@
 
   function encodeDetails(d) {
     const p = new URLSearchParams();
-    for (const k in KEYS) if (d[k]) p.set(KEYS[k], d[k].replace(/^https:\/\//, ''));
+    for (const k in KEYS) if (d[k]) p.set(KEYS[k], k === 'logo' ? d[k] : d[k].replace(/^https:\/\//, ''));
     return p.toString();
   }
 
@@ -506,11 +531,12 @@
     const d = { name: (p.get('n') || '').slice(0, 80), phone: '', address: '', website: '', instagram: '', facebook: '', logo: '' };
     const phone = (p.get('p') || '').trim().replace(/^(?=\d)/, '+');
     if (/^\+\d{7,15}$/.test(phone)) d.phone = phone;
-    ['address', 'website', 'instagram', 'facebook', 'logo'].forEach(k => {
+    ['address', 'website', 'instagram', 'facebook'].forEach(k => {
       const v = p.get(KEYS[k]);
       const u = v && parseDomainUrl(v);
       if (u) d[k] = u.href;
     });
+    d.logo = p.get('l') || '';
     return hasDetails(d) ? d : null;
   }
 
@@ -524,7 +550,7 @@
     root.replaceChildren();
     const avatar = document.createElement('div');
     avatar.className = 'avatar';
-    const logoSrc = d.logo || (preview ? uploadedSrc : '');
+    const logoSrc = logoSource(d.logo);
     if (logoSrc) {
       const img = document.createElement('img');
       img.src = logoSrc;
@@ -548,11 +574,12 @@
       if (!href.startsWith('tel:')) { a.target = '_blank'; a.rel = 'noopener noreferrer'; }
       links.append(a);
     };
+    const handle = u => '@' + u.replace(/\/+$/, '').split('/').pop();
     if (d.phone) add('phone', 'Call ' + d.phone, 'tel:' + d.phone);
     if (d.address) add('address', 'Find us on the map', d.address);
-    if (d.website) add('website', 'Visit our website', d.website);
-    if (d.instagram) add('instagram', 'Instagram', d.instagram);
-    if (d.facebook) add('facebook', 'Facebook', d.facebook);
+    if (d.website) add('website', d.website.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''), d.website);
+    if (d.instagram) add('instagram', 'Instagram ' + handle(d.instagram), d.instagram);
+    if (d.facebook) add('facebook', 'Facebook ' + handle(d.facebook), d.facebook);
 
     if (!links.children.length && preview) {
       const ghost = document.createElement('div');
@@ -694,7 +721,7 @@
 
   function setLogo(img, src) {
     logoImg = img;
-    uploadedSrc = img ? src : '';
+    tinyLogo = img ? makeTinyLogo(img) : '';
     logoBg = img ? pickLogoBg(img) : '#fff';
     $('logoBox').style.background = img ? logoBg : '';
     $('logoBox').querySelector('img')?.remove();
@@ -732,7 +759,7 @@
 
     $('igCheck').addEventListener('change', e => { $('igWrap').hidden = !e.target.checked; render().catch(()=>{}); });
     $('fbCheck').addEventListener('change', e => { $('fbWrap').hidden = !e.target.checked; render().catch(()=>{}); });
-    ['address', 'website', 'instagram', 'facebook', 'siteUrl', 'logoUrl'].forEach(id => $(id).addEventListener('input', () => render().catch(()=>{})));
+    ['address', 'website', 'instagram', 'facebook', 'siteUrl'].forEach(id => $(id).addEventListener('input', () => render().catch(()=>{})));
 
     // Capitalise the first letter of every word as the user types.
     $('name').addEventListener('input', e => {
