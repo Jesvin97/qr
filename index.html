@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0d6b51" />
+  <title>Beacon — QR profile builder</title>
+  <meta name="description" content="Create a beautiful shareable QR profile for your business. One scan opens your phone, WhatsApp, maps, socials and more. Free, no sign-up." />
+  <link rel="canonical" href="https://qr-sigma-gold.vercel.app/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Beacon" />
+  <meta property="og:title" content="Beacon — QR profile builder" />
+  <meta property="og:description" content="Turn your storefront into a signal. Build a Linktree-style business profile and share it with one QR code." />
+  <meta property="og:url" content="https://qr-sigma-gold.vercel.app/" />
+  <meta property="og:image" content="https://qr-sigma-gold.vercel.app/icons/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Beacon — turn your storefront into a signal" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Beacon — QR profile builder" />
+  <meta name="twitter:description" content="Build a Linktree-style business profile and share it with one QR code." />
+  <meta name="twitter:image" content="https://qr-sigma-gold.vercel.app/icons/og.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="preload" href="fonts/plusjakarta.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip" href="#profileForm">Skip to the form</a>
+  <main id="builder" class="shell">
+    <nav class="nav"><div class="brand"><span class="mark" aria-hidden="true">⌁</span> beacon</div><div class="nav-note">your business, one scan away</div></nav>
+    <section class="intro"><div class="eyebrow">Digital business card</div><h1>Turn your storefront into a signal.</h1><p>Build a simple, beautiful profile for your business. Share every important link through one QR code. Free — and nothing is stored on a server.</p></section>
+
+    <div class="seg" role="tablist" aria-label="Switch view">
+      <button type="button" role="tab" id="tabEdit" aria-selected="true" aria-controls="profileForm">Edit</button>
+      <button type="button" role="tab" id="tabPreview" aria-selected="false" aria-controls="previewCard">Preview</button>
+    </div>
+
+    <section class="workspace" id="workspace" data-view="edit">
+      <form id="profileForm" class="card form-card" novalidate>
+        <div class="form-top"><h2>Your business profile</h2><button type="button" id="fillExample" class="btn btn-line btn-sm">Fill with an example</button></div>
+        <details class="load"><summary>Already have a profile link? Edit it</summary>
+          <div class="load-row"><input id="loadUrl" type="text" aria-label="Paste your profile link" placeholder="Paste your profile link here" /><button type="button" id="loadBtn" class="btn btn-line btn-sm">Load</button></div>
+          <div class="hint" id="loadMsg" role="status"></div>
+        </details>
+        <div id="linkError" class="error" role="alert" hidden>That profile link is invalid or damaged, so it can't be shown.</div>
+
+        <fieldset class="fs">
+          <legend><span class="num">1</span> The basics</legend>
+          <div class="fields">
+            <div class="field full"><label for="business">Business name</label><input required id="business" type="text" maxlength="80" autocomplete="organization" placeholder="e.g. The Daily Grind" /></div>
+            <div class="field full"><label for="tagline">Tagline <span>optional</span></label><input id="tagline" type="text" maxlength="80" placeholder="e.g. Your daily dose of vitamin C" /></div>
+            <div class="field full"><span class="label" id="logoLabel">Logo <span>optional</span></span><label class="logo-drop" for="logo"><div id="logoPreview" class="logo-preview" aria-hidden="true">✦</div><div class="logo-copy"><strong>Upload your logo</strong><span>PNG, JPG or WebP · under 500 KB</span></div><input class="vh" id="logo" type="file" accept="image/png,image/jpeg,image/webp" aria-labelledby="logoLabel" /></label><div class="hint">Your logo goes in the middle of your QR code. It isn't part of the shared link, so the code stays small and easy to scan.</div></div>
+          </div>
+        </fieldset>
+
+        <fieldset class="fs">
+          <legend><span class="num">2</span> How people reach you</legend>
+          <div class="fields">
+            <div class="field full"><label for="phoneLocal">Phone number</label><div class="phone-row"><select id="phoneCountry" aria-label="Country"></select><input required id="phoneLocal" type="tel" inputmode="tel" autocomplete="tel-national" maxlength="24" placeholder="8714279784" aria-describedby="phoneHint" /></div><input type="hidden" id="phone"><input type="hidden" id="whatsapp"><label class="check"><input type="checkbox" id="waCheck"> This number is on WhatsApp</label><div class="hint" id="phoneHint">Pick your country, then type the number — no need to add the code.</div></div>
+            <div class="field"><label for="email">Email <span>optional</span></label><input id="email" type="email" maxlength="120" autocomplete="email" placeholder="hello@yourbusiness.com" /></div>
+            <div class="field"><label for="location">Address <span>optional</span></label><input id="location" type="text" maxlength="120" autocomplete="street-address" placeholder="12 MG Road, Bengaluru" /><div class="hint">Becomes a "Directions" button that opens Google Maps.</div></div>
+            <div class="field full hours-field"><span class="label" id="hoursLabel">Opening hours <span>optional</span></span>
+              <div class="presets" role="group" aria-label="Quick fill">
+                <button type="button" class="mini" data-preset="weekdays">Mon–Fri 9–5</button>
+                <button type="button" class="mini" data-preset="sixdays">Mon–Sat 9–6</button>
+                <button type="button" class="mini" data-preset="daily">Every day 9–9</button>
+                <button type="button" class="mini" data-preset="247">24/7</button>
+                <button type="button" class="mini" data-preset="copy">Copy first day to all</button>
+                <button type="button" class="mini" data-preset="clear">Clear</button>
+              </div>
+              <div id="hoursGrid" class="hours-grid" role="group" aria-labelledby="hoursLabel"></div>
+              <div class="tz-row"><label for="tz">Time zone</label><select id="tz"></select></div>
+              <input type="hidden" id="hours">
+              <div class="hint">Visitors see a live "Open now" or "Closed" status, worked out in your time zone. Tick "Open" and set the times. Use "+ Add hours" for a lunch break, and a closing time after midnight is fine.</div>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="fs">
+          <legend><span class="num">3</span> Online <span class="fs-note">all optional</span></legend>
+          <div class="fields">
+            <div class="field"><label for="website">Website</label><input id="website" type="text" inputmode="url" maxlength="300" autocomplete="url" placeholder="yourwebsite.com" /></div>
+            <div class="field"><label for="instagram">Instagram</label><input id="instagram" type="text" maxlength="300" autocapitalize="none" placeholder="@yourhandle" /></div>
+            <div class="field"><label for="facebook">Facebook</label><input id="facebook" type="text" maxlength="300" autocapitalize="none" placeholder="yourpage or facebook.com/yourpage" /></div>
+            <div class="field"><label for="youtube">YouTube</label><input id="youtube" type="text" maxlength="300" autocapitalize="none" placeholder="@yourchannel" /></div>
+            <div class="field full"><label for="gmb">Google Business link</label><input id="gmb" type="text" inputmode="url" maxlength="300" placeholder="https://maps.google.com/..." /></div>
+            <div class="field full"><div class="hint">For Instagram, Facebook and YouTube you can type a <b>@handle</b>, a bare domain like <b>instagram.com/you</b>, or a full link.</div></div>
+          </div>
+        </fieldset>
+
+        <fieldset class="fs">
+          <legend><span class="num">4</span> Look &amp; feel</legend>
+          <div class="field full"><span class="label" id="patternLabel">Background</span><div class="themes" id="patterns" role="radiogroup" aria-labelledby="patternLabel"></div></div>
+          <div class="field full"><span class="label" id="themeLabel">Colours</span><div class="themes" id="themes" role="radiogroup" aria-labelledby="themeLabel"></div></div>
+          <div class="field full"><div><button type="button" id="surprise" class="btn btn-line btn-sm">🎲 Surprise me</button></div></div>
+          <details class="custom" id="customColors"><summary>Custom colours</summary>
+            <div class="style-grid"><label class="color-field">Logo circle <input id="pageColor" type="color" value="#2f4a3a"></label><label class="color-field">Background top <input id="gradientStart" type="color" value="#6b7d6e"></label><label class="color-field">Background bottom <input id="gradientEnd" type="color" value="#4a5b4e"></label></div>
+          </details>
+          <div class="qr-color"><label class="color-field">QR code colour <input id="qrColor" type="color" value="#0d6b51"></label><label class="check"><input type="checkbox" id="qrAuto" checked> Match the QR colour to my logo</label><div class="hint" id="qrMatch">Uses your logo's main colour, or the logo-circle colour if you haven't added a logo. Too-light colours are darkened so the code still scans.</div></div>
+        </fieldset>
+
+        <input type="hidden" id="pattern" value="doodles">
+        <div id="formError" class="error" role="alert" hidden></div>
+        <div class="actions"><button type="button" id="reset" class="btn-ghost">Clear all</button><div class="right"><span class="draft" id="draftNote" aria-live="polite"></span><button class="btn-main" type="submit">Create QR code →</button></div></div>
+      </form>
+
+      <aside id="previewCard" class="card preview-card" aria-label="Preview"><div class="preview-label"><span>Live preview</span><span class="badge" id="exampleBadge" hidden>Example</span></div><div id="phoneCard" class="phone"><div id="previewProfile" class="pf pf-mini"></div></div></aside>
+    </section>
+
+    <section id="result" class="card result" tabindex="-1" aria-labelledby="resultTitle" hidden>
+      <div class="result-qr"><img id="qrImage" alt="QR code that opens your business profile" /></div>
+      <div>
+        <h2 id="resultTitle">Your QR code is ready 🎉</h2>
+        <p>Scan it with any phone camera to open your profile. Download it, print it, and put it where customers will see it.</p>
+        <div class="result-actions">
+          <button type="button" id="dlPng" class="btn-main">Download PNG</button>
+          <button type="button" id="dlSvg" class="btn btn-line">Download SVG</button>
+          <button type="button" id="copyLink" class="btn btn-line">Copy link</button>
+          <button type="button" id="shareLink" class="btn btn-line">Share</button>
+          <a id="openLink" class="btn btn-line" target="_blank" rel="noopener">Open profile</a>
+        </div>
+        <details class="link-box"><summary>Show the link</summary><div id="shareUrl" class="share-url"></div></details>
+        <div id="hostWarn" class="warn" hidden>Heads up: this page is running from a local address, so the link and QR code will only open on this device. Open the live site and create your QR code there.</div>
+      </div>
+    </section>
+  </main>
+
+  <main id="profilePage" class="profile-page" hidden><div id="publicProfile" class="pf"></div></main>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="vendor/qrcode.min.js"></script>
+  <script src="vendor/libphonenumber-min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
